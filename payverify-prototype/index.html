@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PayVerify Prototype</title>
+<style>
+:root{
+  --bg:#f4f6f9;--card:#fff;--ink:#17212b;--muted:#5b6876;--line:#dde3ea;
+  --brand:#0b4f6c;--brand2:#127a9a;--warn:#b45309;--warnbg:#fef3c7;--err:#b42318;--errbg:#fee4e2;
+  --ok:#157347;--okbg:#dcfce7;--info:#1d4ed8;--infobg:#dbeafe;--radius:10px;
+}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--brand2)}
+.proto-banner{background:#1f2937;color:#fff;padding:6px 16px;font-size:13px;text-align:center}
+.proto-banner .link{color:#93c5fd}
+.link{background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;font:inherit}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--brand);color:#fff;padding:10px 20px}
+.brand{font-weight:700;font-size:18px;display:flex;align-items:center;gap:10px}
+.brand small{font-weight:400;opacity:.8;font-size:12px}
+.logo{background:#fff;color:var(--brand);border-radius:8px;padding:3px 8px;font-weight:800}
+.top-right{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.persona{font-size:12px;display:flex;flex-direction:column;gap:2px}
+.persona select{padding:6px;border-radius:6px;border:0;min-width:230px}
+.layout{display:grid;grid-template-columns:210px 1fr;min-height:70vh}
+nav{background:#fff;border-right:1px solid var(--line);padding:14px 10px;display:flex;flex-direction:column;gap:2px}
+nav a{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;color:var(--ink);text-decoration:none}
+nav a:hover{background:var(--bg)}
+nav a.active{background:var(--brand);color:#fff}
+nav .count{background:var(--warnbg);color:var(--warn);border-radius:10px;font-size:12px;padding:0 7px;font-weight:600}
+main{padding:22px;max-width:1200px;width:100%}
+h1{margin:0 0 4px;font-size:24px}h2{font-size:17px;margin:0 0 10px}h3{font-size:15px;margin:14px 0 6px}
+.sub{color:var(--muted);margin:0 0 18px}
+.muted{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.cards .card{margin:0}
+.kpi .label{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.kpi .value{font-size:22px;font-weight:700;margin:4px 0 2px}
+.kpi .note{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:600;white-space:nowrap}
+.s-pending{background:var(--infobg);color:var(--info)}
+.s-needs_review{background:var(--warnbg);color:var(--warn)}
+.s-approved{background:var(--okbg);color:var(--ok)}
+.s-rejected{background:var(--errbg);color:var(--err)}
+.s-paid{background:#e0e7ff;color:#3730a3}
+.b-flag{background:var(--warnbg);color:var(--warn)}
+.b-ok{background:var(--okbg);color:var(--ok)}
+.btn{display:inline-block;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font:inherit;text-decoration:none;color:var(--ink)}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand2)}
+.btn.danger{background:var(--err);border-color:var(--err);color:#fff}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.notice{border-radius:8px;padding:10px 12px;margin:10px 0;font-size:14px}
+.notice.warn{background:var(--warnbg);color:#78350f}
+.notice.info{background:var(--infobg);color:#1e3a8a}
+.notice.ok{background:var(--okbg);color:#14532d}
+.notice.err{background:var(--errbg);color:#7a271a}
+.exc-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.exc-list li{border-left:4px solid var(--warn);background:#fffbeb;padding:8px 12px;border-radius:6px}
+.exc-list li.info{border-color:var(--info);background:#eff6ff}
+.exc-list strong{display:block}
+form.stack,.mform{display:grid;gap:12px}
+label{display:grid;gap:4px;font-weight:600;font-size:13px}
+label.check{display:flex;gap:8px;align-items:flex-start;font-weight:400}
+input,select,textarea{font:inherit;padding:8px;border:1px solid #c4ccd6;border-radius:6px;width:100%;background:#fff}
+input[type=checkbox],input[type=radio]{width:auto}
+textarea{min-height:70px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.err{color:var(--err);font-weight:600;margin:0}
+.actions{display:flex;gap:8px;justify-content:flex-end}
+.bar{height:8px;background:#e5e9ee;border-radius:6px;overflow:hidden;min-width:90px}
+.bar span{display:block;height:100%;background:var(--brand2)}
+.bar.over span{background:var(--err)}
+.chain{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.chain li{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:8px 0;border-left:2px solid var(--line);margin-left:12px;padding-left:12px;position:relative}
+.chain li:before{content:"";position:absolute;left:-8px;top:12px;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--line)}
+.chain li.done:before{background:var(--ok);border-color:var(--ok)}
+.chain li.warn:before{background:var(--warn);border-color:var(--warn)}
+.chain li div{grid-column:2}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.timeline li{border-left:3px solid var(--brand2);padding:2px 0 2px 10px}
+.timeline small{color:var(--muted)}
+.diff{background:var(--warnbg);font-weight:600}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:end}
+.toolbar label{min-width:170px}
+dialog{border:0;border-radius:12px;padding:20px;width:min(640px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(15,23,42,.55)}
+#toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:50}
+.toast{background:#111827;color:#fff;padding:10px 14px;border-radius:8px;max-width:360px}
+.toast.err{background:var(--err)}
+footer{padding:16px 22px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);background:#fff}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.refs{font-size:12px;color:var(--muted)}
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr}
+  nav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+  nav a{white-space:nowrap}
+  .grid2,.row2,.row3{grid-template-columns:1fr}
+  main{padding:14px}
+}
+</style>
+</head>
+<body>
+<div class="proto-banner" role="note">
+  <strong>Educational prototype.</strong> All data is illustrative sample data. No bank or payment connection exists and no money is ever sent.
+  <button class="link" data-act="safety">Read safety notes</button>
+</div>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">PV</span> PayVerify <small>Supplier payment verification</small></div>
+  <div class="top-right">
+    <label class="persona">Acting as (simulated)
+      <select id="persona" aria-label="Demo persona"></select>
+    </label>
+    <button class="btn small" data-act="reset">Reset sample workspace</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="nav" aria-label="Main"></nav>
+  <main id="view" tabindex="-1"></main>
+</div>
+
+<footer>
+  PayVerify is a classroom prototype. The persona selector is simulated and is not authentication or authorization.
+  Data and document names are kept only in this browser's local storage, which is not secure storage.
+  A flag is an exception for human review and never proves fraud. Recording a payment does not move money.
+</footer>
+
+<dialog id="modal"></dialog>
+<div id="toasts" aria-live="polite"></div>
+<script>
+/* PayVerify prototype - educational only. All state lives in this browser's localStorage. */
+(function () {
+'use strict';
+
+const KEY = 'payverify.prototype.v1', ACK = 'payverify.prototype.ack';
+const PERSONAS = {
+  requester: { name: 'Rina Santos', label: 'Requester (AP Clerk)', can: ['create'] },
+  reviewer: { name: 'Marco Dela Cruz', label: 'Finance Reviewer', can: ['verify', 'review', 'supplier'] },
+  approver: { name: 'Elena Reyes', label: 'Approver (Finance Manager)', can: ['approve'] },
+  recorder: { name: 'Joel Tan', label: 'Payment Recorder', can: ['record'] },
+  auditor: { name: 'Aiko Mendoza', label: 'Auditor (read-only)', can: [] }
+};
+const OPEN = ['pending', 'needs_review', 'approved'];
+const CLOSED = ['approved', 'rejected', 'paid'];
+const SLABEL = { pending: 'Pending', needs_review: 'Needs review', approved: 'Approved', rejected: 'Rejected', paid: 'Paid' };
+const FLAG_NOTE = 'A flag is an exception that needs human review. It does not prove that a sender is a scammer or that fraud occurred.';
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PHP = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
+const peso = n => PHP.format(n || 0);
+const fdate = d => d ? new Date(d.length === 10 ? d + 'T00:00:00' : d).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+const fts = t => new Date(t).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' });
+const sum = (a, f) => a.reduce((t, x) => t + (f(x) || 0), 0);
+const norm = v => String(v || '').replace(/[\s-]/g, '').toLowerCase();
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const money = v => Math.round(Number(v) * 100) / 100;
+
+/* ---------- seed ---------- */
+function seed() {
+  const B = (bank, accName, accNo) => ({ bank, accName, accNo });
+  const st = { v: 1, persona: 'reviewer', seq: 1010, aseq: 0, suppliers: [], budgets: [], requests: [], audit: [] };
+  const ev = (ts, p, action, req, detail, refs) => st.audit.push({
+    id: 'A-' + String(++st.aseq).padStart(4, '0'), ts, actor: PERSONAS[p].name, role: PERSONAS[p].label,
+    action, reqId: req || null, detail, refs: refs || null
+  });
+  st.suppliers = [
+    { id: 'SUP-01', name: 'Luzon Office Supplies Inc.', contact: { name: 'Carla Mendez', email: 'accounts@luzonoffice.example', phone: '+63 2 8555 0101' }, bank: B('BDO Unibank', 'Luzon Office Supplies Inc.', '0012 3456 7890'), pendingChange: null, history: [], registeredAt: '2025-03-04' },
+    { id: 'SUP-02', name: 'Mabuhay Facilities Services Corp.', contact: { name: 'Ramon Villanueva', email: 'billing@mabuhayfs.example', phone: '+63 2 8555 0202' }, bank: B('Metrobank', 'Mabuhay Facilities Services Corp.', '3 210 55421 9'),
+      pendingChange: { bank: B('BPI', 'M. Facilities Services', '1234 5678 90'), reportedAt: '2026-11-17T09:40:00+08:00', via: 'Email attached to invoice INV-MFS-3306 asking to use a new account' }, history: [], registeredAt: '2024-08-19' },
+    { id: 'SUP-03', name: 'Visayas Cloud Hosting Corp.', contact: { name: 'Ana Lim', email: 'ar@visayascloud.example', phone: '+63 32 555 0303' }, bank: B('BPI', 'Visayas Cloud Hosting Corp.', '9876 5432 10'), pendingChange: null, history: [], registeredAt: '2025-01-12' },
+    { id: 'SUP-04', name: 'Cebu Logistics & Freight Co.', contact: { name: 'Jun Ocampo', email: 'finance@cebulogistics.example', phone: '+63 32 555 0404' }, bank: B('Security Bank', 'Cebu Logistics & Freight Co.', '0000 1122 3344'), pendingChange: null, history: [], registeredAt: '2023-11-02' },
+    { id: 'SUP-05', name: 'Pinoy Print Works', contact: { name: 'Liza Bautista', email: 'hello@pinoyprint.example', phone: '+63 2 8555 0505' }, bank: B('UnionBank', 'Pinoy Print Works', '1090 2233 4455'), pendingChange: null, history: [], registeredAt: '2025-06-30' },
+    { id: 'SUP-06', name: 'Davao Catering Co.', contact: { name: 'Miguel Tan', email: 'orders@davaocatering.example', phone: '+63 82 555 0606' }, bank: B('Landbank', 'Davao Catering Co.', '5566 7788 99'), pendingChange: null, history: [], registeredAt: '2025-09-15' }
+  ];
+  st.budgets = [
+    { id: 'BUD-01', name: 'Office & Supplies', allocated: 250000 },
+    { id: 'BUD-02', name: 'Facilities', allocated: 400000 },
+    { id: 'BUD-03', name: 'IT & Hosting', allocated: 300000 },
+    { id: 'BUD-04', name: 'Logistics', allocated: 180000 },
+    { id: 'BUD-05', name: 'Marketing & Print', allocated: 120000 },
+    { id: 'BUD-06', name: 'Events', allocated: 90000 }
+  ];
+  const sup = id => st.suppliers.find(s => s.id === id);
+  const mk = o => Object.assign({ message: '', docs: [], invoiceDoc: null, payRef: '', supportedAmount: null, invoiceMarkedPaid: false, verifications: [], review: null, approval: null, payment: null, snapshot: null, submittedBy: 'Rina Santos' }, o);
+  const add = (o, events) => { const r = mk(o); r.dest = Object.assign({}, o.dest || sup(o.supplierId).bank); st.requests.push(r); events(r); };
+
+  add({ id: 'REQ-1001', supplierId: 'SUP-01', budgetId: 'BUD-01', amount: 48500, supportedAmount: 48500, invoiceNo: 'INV-LOS-7741', dueDate: '2026-11-30', payRef: 'PO-2026-0412', invoiceDoc: 'INV-LOS-7741.pdf', docs: ['PO-2026-0412.pdf', 'Delivery-receipt-5521.pdf'], message: 'Quarterly office supplies per PO-2026-0412. Invoice attached.', submittedAt: '2026-11-16T10:05:00+08:00', status: 'pending' },
+    r => ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted. No exceptions found at intake.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] }));
+
+  add({ id: 'REQ-1002', supplierId: 'SUP-03', budgetId: 'BUD-03', amount: 126000, supportedAmount: 126000, invoiceNo: 'INV-VCH-0932', dueDate: '2026-11-25', payRef: 'PO-2026-0398', invoiceDoc: 'INV-VCH-0932.pdf', docs: ['Hosting-contract.pdf'], message: 'Annual hosting renewal.', submittedAt: '2026-11-09T09:20:00+08:00', status: 'approved' },
+    r => {
+      ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] });
+      r.review = { decision: 'recommend_approve', note: 'Amount matches the signed contract. Destination matches register.', ack: true, by: 'Marco Dela Cruz', at: '2026-11-10T14:00:00+08:00' };
+      ev(r.review.at, 'reviewer', 'Review decision', r.id, 'Recommended approval. ' + r.review.note);
+      r.approval = { decision: 'approved', note: 'Approved within IT & Hosting budget.', by: 'Elena Reyes', at: '2026-11-11T11:30:00+08:00' };
+      ev(r.approval.at, 'approver', 'Approved', r.id, r.approval.note);
+    });
+
+  add({ id: 'REQ-1003', supplierId: 'SUP-04', budgetId: 'BUD-04', amount: 87250, supportedAmount: 87250, invoiceNo: 'INV-CLF-1180', dueDate: '2026-11-15', payRef: 'SHIP-88213', invoiceDoc: 'INV-CLF-1180.pdf', docs: ['Bill-of-lading-88213.pdf'], message: 'Freight for October shipments.', submittedAt: '2026-11-03T08:45:00+08:00', status: 'paid' },
+    r => {
+      ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] });
+      r.verifications.push({ method: 'phone', contact: 'Phone on file: ' + sup('SUP-04').contact.phone, outcome: 'confirmed', independent: true, notes: 'Spoke to Jun Ocampo; confirmed invoice amount and account.', by: 'Marco Dela Cruz', at: '2026-11-04T10:10:00+08:00' });
+      ev(r.verifications[0].at, 'reviewer', 'Verification recorded', r.id, 'Routine call-back confirmed. ' + r.verifications[0].notes, { contact: r.verifications[0].contact });
+      r.review = { decision: 'recommend_approve', note: 'All documents present.', ack: true, by: 'Marco Dela Cruz', at: '2026-11-04T10:20:00+08:00' };
+      ev(r.review.at, 'reviewer', 'Review decision', r.id, 'Recommended approval. ' + r.review.note);
+      r.approval = { decision: 'approved', note: 'OK to pay.', by: 'Elena Reyes', at: '2026-11-05T09:00:00+08:00' };
+      ev(r.approval.at, 'approver', 'Approved', r.id, r.approval.note);
+      r.payment = { date: '2026-11-14', amount: 87250, ref: 'BDO-TRX-20261114-0087', proof: 'bank-confirmation-0087.png', notes: '', by: 'Joel Tan', at: '2026-11-14T15:30:00+08:00' };
+      ev(r.payment.at, 'recorder', 'Payment recorded', r.id, 'Recorded an external payment already made by the bank. Amount ' + peso(87250) + '.', { reference: r.payment.ref, proof: r.payment.proof });
+    });
+
+  add({ id: 'REQ-1004', supplierId: 'SUP-02', budgetId: 'BUD-02', amount: 215000, supportedAmount: 215000, invoiceNo: 'INV-MFS-3306', dueDate: '2026-11-22', payRef: 'PO-2026-0420', invoiceDoc: 'INV-MFS-3306.pdf', docs: ['Service-report-Oct.pdf'],
+      dest: B('BPI', 'M. Facilities Services', '1234 5678 90'),
+      message: 'Please note our bank account has changed. Use the new account below. To confirm, call us on 0917 000 0000.', submittedAt: '2026-11-17T09:45:00+08:00', status: 'needs_review' },
+    r => ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted with payment details that differ from the supplier register.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] }));
+  ev('2026-11-17T09:40:00+08:00', 'requester', 'Payment details change reported', null, 'Mabuhay Facilities Services Corp.: change of payment destination reported by email. Flagged for independent verification.', { supplier: 'SUP-02' });
+
+  add({ id: 'REQ-1005', supplierId: 'SUP-05', budgetId: 'BUD-05', amount: 64000, supportedAmount: 64000, invoiceNo: 'INV-PP-2291', dueDate: '2026-11-08', payRef: 'PO-2026-0377', invoiceDoc: 'INV-PP-2291.pdf', docs: ['Print-proof-approved.pdf'], message: 'Annual report printing.', submittedAt: '2026-11-01T13:10:00+08:00', status: 'paid' },
+    r => {
+      ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] });
+      r.review = { decision: 'recommend_approve', note: 'Documents complete.', ack: true, by: 'Marco Dela Cruz', at: '2026-11-02T09:30:00+08:00' };
+      ev(r.review.at, 'reviewer', 'Review decision', r.id, 'Recommended approval. ' + r.review.note);
+      r.approval = { decision: 'approved', note: 'Approved.', by: 'Elena Reyes', at: '2026-11-02T15:00:00+08:00' };
+      ev(r.approval.at, 'approver', 'Approved', r.id, r.approval.note);
+      r.payment = { date: '2026-11-05', amount: 64000, ref: 'UB-TRX-20261105-0412', proof: 'unionbank-receipt-0412.pdf', notes: '', by: 'Joel Tan', at: '2026-11-05T16:00:00+08:00' };
+      ev(r.payment.at, 'recorder', 'Payment recorded', r.id, 'Recorded an external payment already made by the bank. Amount ' + peso(64000) + '.', { reference: r.payment.ref, proof: r.payment.proof });
+    });
+
+  add({ id: 'REQ-1006', supplierId: 'SUP-05', budgetId: 'BUD-05', amount: 64000, supportedAmount: 64000, invoiceNo: 'INV-PP-2291', dueDate: '2026-11-20', payRef: 'PO-2026-0377', invoiceDoc: 'INV-PP-2291-reminder.pdf', docs: [], message: 'Second reminder: please settle invoice INV-PP-2291.', submittedAt: '2026-11-17T14:20:00+08:00', status: 'needs_review' },
+    r => ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted. Same supplier and invoice number as REQ-1005.', { invoice: r.invoiceNo, docs: [r.invoiceDoc] }));
+
+  add({ id: 'REQ-1007', supplierId: 'SUP-06', budgetId: 'BUD-06', amount: 98000, supportedAmount: 92000, invoiceNo: 'INV-DCC-0457', dueDate: '2026-11-27', payRef: 'EVT-2026-11', invoiceDoc: 'INV-DCC-0457.pdf', docs: ['Catering-quote.pdf', 'Headcount-list.xlsx'], message: 'Year-end event catering, final billing.', submittedAt: '2026-11-16T16:30:00+08:00', status: 'needs_review' },
+    r => ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] }));
+
+  add({ id: 'REQ-1008', supplierId: 'SUP-01', budgetId: 'BUD-01', amount: 22000, supportedAmount: null, invoiceNo: 'INV-LOS-7802', dueDate: '2026-12-05', payRef: '', invoiceDoc: null, docs: [], message: 'Urgent - please pay today.', submittedAt: '2026-11-18T08:15:00+08:00', status: 'needs_review' },
+    r => ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted without documents or payment reference.', { invoice: r.invoiceNo }));
+
+  add({ id: 'REQ-1009', supplierId: 'SUP-03', budgetId: 'BUD-03', amount: 72000, supportedAmount: 72000, invoiceNo: 'INV-VCH-0955', dueDate: '2026-11-20', payRef: 'PO-2026-0431', invoiceDoc: 'INV-VCH-0955.pdf', docs: ['Usage-report.pdf'], message: 'Extra capacity charge.', submittedAt: '2026-11-12T11:00:00+08:00', status: 'rejected' },
+    r => {
+      ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] });
+      r.review = { decision: 'recommend_reject', note: 'Charge not covered by contract; ask supplier to reissue.', ack: true, by: 'Marco Dela Cruz', at: '2026-11-13T10:00:00+08:00' };
+      ev(r.review.at, 'reviewer', 'Review decision', r.id, 'Recommended rejection. ' + r.review.note);
+      r.approval = { decision: 'rejected', note: 'Service period not covered by contract. Supplier to reissue.', by: 'Elena Reyes', at: '2026-11-13T15:45:00+08:00' };
+      ev(r.approval.at, 'approver', 'Rejected', r.id, r.approval.note);
+    });
+
+  add({ id: 'REQ-1010', supplierId: 'SUP-01', budgetId: 'BUD-01', amount: 31200, supportedAmount: 31200, invoiceNo: 'INV-LOS-7790', dueDate: '2026-12-02', payRef: 'PO-2026-0433', invoiceDoc: 'INV-LOS-7790.pdf', docs: ['PO-2026-0433.pdf'], message: 'Printer paper and toner.', submittedAt: '2026-11-17T11:00:00+08:00', status: 'pending' },
+    r => ev(r.submittedAt, 'requester', 'Submitted', r.id, 'Payment request submitted. No exceptions found at intake.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] }));
+
+  S = st; // analyze() reads global state
+  st.requests.forEach(r => { if (CLOSED.includes(r.status)) r.snapshot = analyze(r); });
+  return st;
+}
+
+/* ---------- state ---------- */
+let S;
+let cur = '';
+let memOnly = false;
+function navigate(h) {
+  cur = String(h || '').replace(/^#\/?/, '');
+  try { history.replaceState(null, '', '#/' + cur); } catch (e) { /* sandboxed preview */ }
+  render(); window.scrollTo(0, 0);
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { const p = JSON.parse(raw); if (p && p.v === 1) return p; }
+  } catch (e) { /* ignore */ }
+  return seed();
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { if (!memOnly) { memOnly = true; toast('Browser storage is unavailable here. Changes work but will be lost on reload.', 'err'); } }
+}
+const supplier = id => S.suppliers.find(s => s.id === id);
+const budget = id => S.budgets.find(b => b.id === id);
+const req = id => S.requests.find(r => r.id === id);
+const persona = () => PERSONAS[S.persona];
+const canDo = p => persona().can.includes(p);
+const lastVer = r => r.verifications && r.verifications.length ? r.verifications[r.verifications.length - 1] : null;
+const verified = r => { const v = lastVer(r); return !!(v && v.outcome === 'confirmed' && v.independent); };
+
+function logEv(action, reqId, detail, refs) {
+  const p = persona();
+  S.audit.push({ id: 'A-' + String(++S.aseq).padStart(4, '0'), ts: new Date().toISOString(), actor: p.name, role: p.label, action, reqId: reqId || null, detail, refs: refs || null });
+}
+
+/* ---------- money & analysis ---------- */
+function budgetStats(b, excludeId) {
+  const rs = S.requests.filter(r => r.budgetId === b.id && r.id !== excludeId);
+  const committed = sum(rs.filter(r => OPEN.includes(r.status)), r => r.amount);
+  const spent = sum(rs.filter(r => r.status === 'paid'), r => r.payment.amount);
+  return { committed, spent, available: b.allocated - committed - spent };
+}
+const sameBank = (a, b) => ['bank', 'accName', 'accNo'].every(k => norm(a && a[k]) === norm(b && b[k]));
+
+function analyze(r) {
+  const ex = [];
+  const sup = supplier(r.supplierId), bud = budget(r.budgetId);
+  const key = x => x.supplierId + '|' + String(x.invoiceNo || '').trim().toLowerCase();
+  const earlier = S.requests.filter(o => o.id !== r.id && key(o) === key(r) && String(o.submittedAt) <= String(r.submittedAt));
+  if (earlier.length) ex.push({ code: 'duplicate', title: 'Possible duplicate request', text: 'This supplier and invoice number were already submitted in ' + earlier.map(o => o.id + ' (' + SLABEL[o.status] + ')').join(', ') + '.' });
+  const paidOther = earlier.find(o => o.status === 'paid');
+  if (r.invoiceMarkedPaid || paidOther) ex.push({ code: 'already_paid', title: 'Invoice may already be paid', text: paidOther ? 'A payment for this invoice was already recorded under ' + paidOther.id + ' (ref ' + paidOther.payment.ref + ').' : 'The submitter indicated the invoice is already marked paid.' });
+  if (r.supportedAmount == null) ex.push({ code: 'no_support_amount', title: 'No amount on supporting records', text: 'No invoice/PO amount was provided to compare with the requested ' + peso(r.amount) + '.' });
+  else if (Math.abs(r.supportedAmount - r.amount) > 0.005) ex.push({ code: 'mismatch', title: 'Amount differs from supporting records', text: 'Requested ' + peso(r.amount) + ' but supporting records show ' + peso(r.supportedAmount) + ' (difference ' + peso(r.amount - r.supportedAmount) + ').' });
+  if (!r.invoiceDoc) ex.push({ code: 'missing_invoice', title: 'Invoice document missing', text: 'No invoice file name was attached.' });
+  if (!r.docs.length) ex.push({ code: 'missing_docs', title: 'Supporting documents missing', text: 'No supporting documents (PO, delivery receipt, contract) were attached.' });
+  if (!String(r.payRef || '').trim()) ex.push({ code: 'missing_ref', title: 'Payment/PO reference missing', text: 'No payment or purchase-order reference was provided.' });
+  if (bud) {
+    const st = budgetStats(bud, r.id);
+    if (r.amount > st.available + 0.005) ex.push({ code: 'budget', title: 'Budget exception', text: 'Requested ' + peso(r.amount) + ' exceeds the ' + peso(Math.max(st.available, 0)) + ' available in ' + bud.name + ' (allocated ' + peso(bud.allocated) + ', committed ' + peso(st.committed) + ', spent ' + peso(st.spent) + ').' });
+  }
+  if (sup && (sup.pendingChange || !sameBank(r.dest, sup.bank))) ex.push({ code: 'changed_details', title: 'Changed supplier payment details', blocking: true, text: 'The payment destination differs from the one recorded in the supplier register' + (sup.pendingChange ? ', or the supplier has an unverified change report' : '') + '. Independent verification through a contact already on file is required before approval.' });
+  if (/@|https?:\/\/|\+?\d[\d\s().-]{7,}\d/.test(r.message || '')) ex.push({ code: 'msg_contact', info: true, title: 'Contact details inside the message', text: 'The supporting message contains contact details. Do not use them to verify; use only the contact already on file.' });
+  return ex;
+}
+const getExc = r => (CLOSED.includes(r.status) && r.snapshot) ? r.snapshot : analyze(r);
+const realExc = r => getExc(r).filter(e => !e.info);
+
+function stage(r) {
+  if (r.status === 'paid') return 'Complete';
+  if (r.status === 'rejected') return 'Closed';
+  if (r.status === 'approved') return 'Awaiting payment record';
+  if (r.review && r.review.decision === 'recommend_approve') return 'Awaiting approver';
+  if (r.review && r.review.decision === 'recommend_reject') return 'Rejection recommended - awaiting approver';
+  return 'Awaiting finance review';
+}
+const badge = s => '<span class="badge s-' + s + '">' + SLABEL[s] + '</span>';
+
+/* ---------- ui plumbing ---------- */
+function toast(msg, type) {
+  const t = document.createElement('div'); t.className = 'toast ' + (type || ''); t.textContent = msg;
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4200);
+}
+function modal(title, body, onSubmit, submit) {
+  const d = $('#modal');
+  d.innerHTML = '<form class="mform" novalidate><h2>' + esc(title) + '</h2>' + body + '<p class="err" hidden></p><div class="actions"><button type="button" class="btn" data-act="closeModal">Cancel</button>' + (onSubmit ? '<button class="btn primary" type="submit">' + esc(submit || 'Save') + '</button>' : '') + '</div></form>';
+  const f = d.querySelector('form');
+  f._run = () => {
+    if (!onSubmit) return;
+    const err = onSubmit(new FormData(f), f);
+    if (err) { const m = f.querySelector('.err'); m.textContent = err; m.hidden = false; } else d.close();
+  };
+  f.addEventListener('submit', ev => { ev.preventDefault(); f._run(); });
+  d.showModal();
+}
+function guard(p, what) {
+  if (canDo(p)) return true;
+  toast('The simulated persona "' + persona().label + '" cannot ' + what + '. Switch persona to try this step.', 'err');
+  return false;
+}
+function permNote(p, what) {
+  return canDo(p) ? '' : '<p class="muted">Simulated persona <strong>' + esc(persona().label) + '</strong> cannot ' + what + '. Switch persona (top right) to try this step.</p>';
+}
+function showErr(form, msg) { const m = form.querySelector('.err'); if (m) { m.textContent = msg; m.hidden = false; } }
+function fileName(f) { return f && f.name ? f.name : ''; }
+
+/* ---------- views ---------- */
+function vDashboard() {
+  const open = S.requests.filter(r => OPEN.includes(r.status));
+  const commit = sum(open, r => r.amount);
+  const paid = S.requests.filter(r => r.status === 'paid');
+  const recorded = sum(paid, r => r.payment.amount);
+  const bs = S.budgets.map(b => Object.assign({ b }, budgetStats(b)));
+  const alloc = sum(S.budgets, b => b.allocated);
+  const avail = sum(bs, x => x.available);
+  const needs = S.requests.filter(r => r.status === 'needs_review');
+  const ok = Math.abs(sum(bs, x => x.committed) - commit) < 0.005 && Math.abs(sum(bs, x => x.spent) - recorded) < 0.005 && Math.abs(alloc - commit - recorded - avail) < 0.005;
+  const alerts = [];
+  open.forEach(r => realExc(r).forEach(e => alerts.push({ r, e })));
+  S.suppliers.filter(s => s.pendingChange).forEach(s => alerts.push({ s }));
+  bs.filter(x => x.available < 0).forEach(x => alerts.push({ over: x }));
+  const kpi = (l, v, n) => '<div class="card kpi"><div class="label">' + l + '</div><div class="value">' + v + '</div><div class="note">' + n + '</div></div>';
+  return '<h1>Dashboard</h1><p class="sub">Supplier invoice payments for one organization (sample data). All amounts in Philippine pesos.</p>' +
+    '<div class="cards">' +
+    kpi('Spending commitments', peso(commit), open.length + ' open requests (pending, needs review, approved)') +
+    kpi('Recorded payments', peso(recorded), paid.length + ' payments recorded manually') +
+    kpi('Outstanding requests', open.length, peso(commit) + ' not yet paid') +
+    kpi('Needing review', needs.length, 'requests with exceptions') +
+    kpi('Allocated budget', peso(alloc), S.budgets.length + ' budgets') +
+    kpi('Available budget', peso(avail), 'allocated - commitments - recorded') + '</div>' +
+    '<div class="notice ' + (ok ? 'ok' : 'err') + '">Report check: budget totals ' + (ok ? 'reconcile with' : 'do NOT reconcile with') + ' the request and payment records shown in the app.</div>' +
+    '<div class="grid2"><div class="card"><h2>Financial-risk alerts</h2><p class="muted">' + FLAG_NOTE + '</p>' +
+    (alerts.length ? '<ul class="exc-list">' + alerts.map(a => a.r ? '<li><strong>' + esc(a.e.title) + ' - <a href="#/requests/' + a.r.id + '">' + a.r.id + '</a></strong>' + esc(supplier(a.r.supplierId).name) + ': ' + esc(a.e.text) + '</li>'
+      : a.s ? '<li><strong>Unverified payment-detail change - ' + esc(a.s.name) + '</strong>Reported ' + fts(a.s.pendingChange.reportedAt) + '. <a href="#/suppliers">View supplier</a></li>'
+        : '<li><strong>Budget over-committed - ' + esc(a.over.b.name) + '</strong>Available is ' + peso(a.over.available) + '.</li>').join('') + '</ul>' : '<p>No open alerts.</p>') + '</div>' +
+    '<div class="card"><h2>Budgets</h2><div class="tablewrap"><table><thead><tr><th>Budget</th><th class="num">Allocated</th><th class="num">Committed</th><th class="num">Recorded</th><th class="num">Available</th></tr></thead><tbody>' +
+    bs.map(x => '<tr><td>' + esc(x.b.name) + '</td><td class="num">' + peso(x.b.allocated) + '</td><td class="num">' + peso(x.committed) + '</td><td class="num">' + peso(x.spent) + '</td><td class="num"' + (x.available < 0 ? ' style="color:#b42318"' : '') + '>' + peso(x.available) + '</td></tr>').join('') +
+    '</tbody></table></div></div></div>' +
+    '<div class="card"><h2>Recent activity</h2>' + auditList(S.audit.slice().sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 6)) + '<p><a href="#/audit">Open full audit trail</a></p></div>';
+}
+
+function auditList(list) {
+  if (!list.length) return '<p class="muted">No history yet.</p>';
+  return '<ul class="timeline">' + list.map(a => '<li><strong>' + esc(a.action) + '</strong>' + (a.reqId ? ' · <a href="#/requests/' + a.reqId + '">' + a.reqId + '</a>' : '') + '<br>' + esc(a.detail) + (a.refs ? '<br><span class="refs">' + Object.keys(a.refs).map(k => esc(k) + ': ' + esc(Array.isArray(a.refs[k]) ? a.refs[k].filter(Boolean).join(', ') : a.refs[k])).join(' · ') + '</span>' : '') + '<br><small>' + fts(a.ts) + ' · ' + esc(a.actor) + ' (' + esc(a.role) + ')</small></li>').join('') + '</ul>';
+}
+
+const ui = { status: 'all', q: '' };
+function reqRow(r) {
+  const n = realExc(r).length;
+  return '<tr><td><a href="#/requests/' + r.id + '">' + r.id + '</a></td><td>' + esc(supplier(r.supplierId).name) + '</td><td>' + esc(r.invoiceNo) + '</td><td class="num">' + peso(r.amount) + '</td><td>' + fdate(r.dueDate) + '</td><td>' + badge(r.status) + '</td><td>' + (n ? '<span class="badge b-flag">' + n + ' exception' + (n > 1 ? 's' : '') + '</span>' : '<span class="muted">none</span>') + '</td><td>' + esc(stage(r)) + '</td></tr>';
+}
+function vRequests() {
+  const q = ui.q.toLowerCase();
+  const list = S.requests.filter(r => (ui.status === 'all' || r.status === ui.status) && (!q || (r.id + r.invoiceNo + supplier(r.supplierId).name).toLowerCase().includes(q))).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+  return '<h1>Requests</h1><p class="sub">All supplier invoice payment requests.</p><div class="card"><div class="toolbar">' +
+    '<label>Status<select id="fStatus"><option value="all">All</option>' + Object.keys(SLABEL).map(s => '<option value="' + s + '"' + (ui.status === s ? ' selected' : '') + '>' + SLABEL[s] + '</option>').join('') + '</select></label>' +
+    '<label>Search<input id="fQ" value="' + esc(ui.q) + '" placeholder="REQ, invoice, supplier"></label><a class="btn primary" href="#/new">New request</a></div>' +
+    '<div class="tablewrap"><table><thead><tr><th>ID</th><th>Supplier</th><th>Invoice</th><th class="num">Amount</th><th>Due</th><th>Status</th><th>Exceptions</th><th>Stage</th></tr></thead><tbody>' +
+    (list.map(reqRow).join('') || '<tr><td colspan="8" class="muted">No requests match.</td></tr>') + '</tbody></table></div></div>';
+}
+
+function vNew() {
+  const can = canDo('create');
+  return '<h1>New request</h1><p class="sub">Capture a supplier invoice payment request. Exceptions are shown for human review and are never labelled fraud.</p>' +
+    (can ? '' : '<div class="notice warn">The simulated persona <strong>' + esc(persona().label) + '</strong> cannot submit requests. Switch to <em>Requester</em> to submit. You can still use the form to preview checks.</div>') +
+    '<form class="card stack" data-form="newreq" novalidate>' +
+    '<div class="row2"><label>Supplier<select name="supplierId"><option value="">Select supplier</option>' + S.suppliers.map(s => '<option value="' + s.id + '">' + esc(s.name) + '</option>').join('') + '</select></label>' +
+    '<label>Budget<select name="budgetId"><option value="">Select budget</option>' + S.budgets.map(b => '<option value="' + b.id + '">' + esc(b.name) + '</option>').join('') + '</select></label></div>' +
+    '<div class="row3"><label>Requested amount (PHP)<input name="amount" type="number" step="0.01" min="0"></label><label>Invoice number<input name="invoiceNo"></label><label>Due date<input name="dueDate" type="date"></label></div>' +
+    '<div class="row2"><label>Amount on supporting records (invoice/PO total, PHP)<input name="supportedAmount" type="number" step="0.01" min="0"></label><label>Payment / PO reference<input name="payRef"></label></div>' +
+    '<h3>Payment destination stated in the invoice or message</h3><div class="row3"><label>Bank<input name="bank"></label><label>Account name<input name="accName"></label><label>Account number<input name="accNo"></label></div>' +
+    '<label>Supporting message (as received)<textarea name="message"></textarea></label>' +
+    '<div class="row2"><label>Invoice document<input type="file" name="invoiceDoc"></label><label>Other supporting documents<input type="file" name="docs" multiple></label></div>' +
+    '<label class="check"><input type="checkbox" name="markedPaid"> The invoice is already marked as paid (e.g. paid stamp or statement)</label>' +
+    '<p class="muted">Only file names are stored in this browser. File contents are not uploaded or stored, and local storage is not secure storage.</p>' +
+    '<div id="preview"></div><p class="err" hidden></p><div class="actions"><button class="btn primary" type="submit"' + (can ? '' : ' disabled') + '>Submit request</button></div></form>';
+}
+function draftFrom(fd) {
+  return {
+    id: 'DRAFT', supplierId: fd.get('supplierId'), budgetId: fd.get('budgetId'), amount: money(fd.get('amount') || 0),
+    supportedAmount: fd.get('supportedAmount') === '' || fd.get('supportedAmount') == null ? null : money(fd.get('supportedAmount')),
+    invoiceNo: String(fd.get('invoiceNo') || '').trim(), dueDate: fd.get('dueDate'), payRef: String(fd.get('payRef') || '').trim(),
+    message: String(fd.get('message') || ''), invoiceDoc: fileName(fd.get('invoiceDoc')) || null,
+    docs: fd.getAll('docs').map(fileName).filter(Boolean), invoiceMarkedPaid: fd.get('markedPaid') === 'on',
+    dest: { bank: String(fd.get('bank') || '').trim(), accName: String(fd.get('accName') || '').trim(), accNo: String(fd.get('accNo') || '').trim() },
+    submittedAt: new Date().toISOString(), status: 'pending'
+  };
+}
+function updatePreview(form) {
+  const el = $('#preview', form); if (!el) return;
+  const d = draftFrom(new FormData(form));
+  if (!d.supplierId) { el.innerHTML = ''; return; }
+  const ex = analyze(d);
+  el.innerHTML = '<div class="notice info"><strong>Pre-submission check</strong> - exceptions require human review and do not prove fraud.</div>' + (ex.length ? excList(ex) : '<p>No exceptions found.</p>');
+}
+function excList(ex) {
+  return '<ul class="exc-list">' + ex.map(e => '<li class="' + (e.info ? 'info' : '') + '"><strong>' + esc(e.title) + '</strong>' + esc(e.text) + '</li>').join('') + '</ul>';
+}
+
+function vSuppliers() {
+  const can = canDo('supplier');
+  return '<h1>Suppliers</h1><p class="sub">Supplier register with previously recorded contact and payment destination.</p>' +
+    '<div class="notice info">' + FLAG_NOTE + ' Verify changes by calling or writing to the contact already on file, never to details supplied in the suspicious message.</div>' +
+    (can ? '<p><button class="btn primary" data-act="addSupplier">Add supplier</button></p>' : permNote('supplier', 'edit the supplier register')) +
+    S.suppliers.map(s => {
+      const n = S.requests.filter(r => r.supplierId === s.id).length;
+      return '<div class="card"><h2>' + esc(s.name) + ' ' + (s.pendingChange ? '<span class="badge b-flag">Changed payment details - verification required</span>' : '<span class="badge b-ok">No open change</span>') + '</h2>' +
+        '<div class="grid2"><div><h3>Contact on file</h3>' + esc(s.contact.name) + '<br>' + esc(s.contact.email) + '<br>' + esc(s.contact.phone) + '</div>' +
+        '<div><h3>Payment destination on file</h3>' + esc(s.bank.bank) + '<br>' + esc(s.bank.accName) + '<br>' + esc(s.bank.accNo) + '</div></div>' +
+        (s.pendingChange ? '<div class="notice warn"><strong>Reported change:</strong> ' + esc(s.pendingChange.bank.bank) + ' / ' + esc(s.pendingChange.bank.accName) + ' / ' + esc(s.pendingChange.bank.accNo) + '<br>Received: ' + esc(s.pendingChange.via) + ' (' + fts(s.pendingChange.reportedAt) + ')<br>Affected requests cannot be approved until independent verification is documented.</div>' : '') +
+        (s.history.length ? '<h3>Previous destinations</h3><ul>' + s.history.map(h => '<li>' + esc(h.bank.bank) + ' / ' + esc(h.bank.accNo) + ' - replaced ' + fts(h.replacedAt) + ' after verification on ' + esc(h.reqId) + '</li>').join('') + '</ul>' : '') +
+        '<p class="muted">' + n + ' request(s) · registered ' + fdate(s.registeredAt) + '</p>' +
+        (can ? '<button class="btn small" data-act="reportChange" data-id="' + s.id + '">Report changed payment details</button>' : '') + '</div>';
+    }).join('');
+}
+
+function vBudgets() {
+  return '<h1>Budgets</h1><p class="sub">Allocated, committed, recorded and available amounts, computed from the requests and payments in this app.</p><div class="card"><div class="tablewrap"><table><thead><tr><th>Budget</th><th class="num">Allocated</th><th class="num">Committed (open requests)</th><th class="num">Recorded payments</th><th class="num">Available</th><th>Use</th><th>Requests</th></tr></thead><tbody>' +
+    S.budgets.map(b => {
+      const x = budgetStats(b), used = b.allocated ? Math.min(100, (x.committed + x.spent) / b.allocated * 100) : 0;
+      const rs = S.requests.filter(r => r.budgetId === b.id);
+      return '<tr><td>' + esc(b.name) + '</td><td class="num">' + peso(b.allocated) + '</td><td class="num">' + peso(x.committed) + '</td><td class="num">' + peso(x.spent) + '</td><td class="num"' + (x.available < 0 ? ' style="color:#b42318"' : '') + '>' + peso(x.available) + '</td><td><div class="bar' + (x.available < 0 ? ' over' : '') + '"><span style="width:' + used + '%"></span></div></td><td>' + (rs.map(r => '<a href="#/requests/' + r.id + '">' + r.id + '</a>').join(', ') || '-') + '</td></tr>';
+    }).join('') + '</tbody></table></div><p class="muted">Committed = pending + needs review + approved requests not yet paid. Rejected requests are excluded. Recorded = actual amounts entered by the payment recorder.</p></div>';
+}
+
+function vApprovals() {
+  const open = S.requests.filter(r => r.status === 'pending' || r.status === 'needs_review');
+  const g1 = open.filter(r => !r.review);
+  const g2 = open.filter(r => r.review);
+  const done = S.requests.filter(r => r.approval).sort((a, b) => b.approval.at.localeCompare(a.approval.at));
+  const tbl = list => '<div class="tablewrap"><table><thead><tr><th>ID</th><th>Supplier</th><th class="num">Amount</th><th>Status</th><th>Exceptions</th><th>Stage</th></tr></thead><tbody>' +
+    (list.map(r => '<tr><td><a href="#/requests/' + r.id + '">' + r.id + '</a></td><td>' + esc(supplier(r.supplierId).name) + '</td><td class="num">' + peso(r.amount) + '</td><td>' + badge(r.status) + '</td><td>' + (realExc(r).map(e => esc(e.title)).join('; ') || 'none') + '</td><td>' + esc(stage(r)) + '</td></tr>').join('') || '<tr><td colspan="6" class="muted">Nothing here.</td></tr>') + '</tbody></table></div>';
+  return '<h1>Approvals</h1><p class="sub">Review, verification and approval queue. Open a request to act on it.</p>' +
+    '<div class="card"><h2>Awaiting finance review (' + g1.length + ')</h2>' + tbl(g1) + '</div>' +
+    '<div class="card"><h2>Reviewed - awaiting approver (' + g2.length + ')</h2>' + tbl(g2) + '</div>' +
+    '<div class="card"><h2>Decisions made</h2><div class="tablewrap"><table><thead><tr><th>ID</th><th>Decision</th><th>By</th><th>When</th><th>Reason</th></tr></thead><tbody>' +
+    (done.map(r => '<tr><td><a href="#/requests/' + r.id + '">' + r.id + '</a></td><td>' + badge(r.approval.decision === 'approved' ? (r.status === 'paid' ? 'paid' : 'approved') : 'rejected') + '</td><td>' + esc(r.approval.by) + '</td><td>' + fts(r.approval.at) + '</td><td>' + esc(r.approval.note) + '</td></tr>').join('') || '<tr><td colspan="5" class="muted">None yet.</td></tr>') + '</tbody></table></div></div>';
+}
+
+function vPayments() {
+  const wait = S.requests.filter(r => r.status === 'approved');
+  const paid = S.requests.filter(r => r.status === 'paid').sort((a, b) => b.payment.date.localeCompare(a.payment.date));
+  return '<h1>Payments</h1><p class="sub">Manual recording of payments that were <strong>already made outside this app</strong>.</p>' +
+    '<div class="notice info">Recording a payment here does not initiate, schedule, or send any payment. There is no bank connection.</div>' + permNote('record', 'record payments') +
+    '<div class="card"><h2>Approved - awaiting payment record (' + wait.length + ')</h2><div class="tablewrap"><table><thead><tr><th>ID</th><th>Supplier</th><th>Invoice</th><th class="num">Approved amount</th><th></th></tr></thead><tbody>' +
+    (wait.map(r => '<tr><td><a href="#/requests/' + r.id + '">' + r.id + '</a></td><td>' + esc(supplier(r.supplierId).name) + '</td><td>' + esc(r.invoiceNo) + '</td><td class="num">' + peso(r.amount) + '</td><td><button class="btn small primary" data-act="pay" data-id="' + r.id + '"' + (canDo('record') ? '' : ' disabled') + '>Record external payment</button></td></tr>').join('') || '<tr><td colspan="5" class="muted">No approved requests waiting.</td></tr>') + '</tbody></table></div></div>' +
+    '<div class="card"><h2>Recorded payments (' + paid.length + ') - total ' + peso(sum(paid, r => r.payment.amount)) + '</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Request</th><th>Supplier</th><th class="num">Actual amount</th><th>Reference</th><th>Proof</th><th>Recorded by</th></tr></thead><tbody>' +
+    (paid.map(r => '<tr><td>' + fdate(r.payment.date) + '</td><td><a href="#/requests/' + r.id + '">' + r.id + '</a></td><td>' + esc(supplier(r.supplierId).name) + '</td><td class="num">' + peso(r.payment.amount) + (Math.abs(r.payment.amount - r.amount) > 0.005 ? '<br><span class="badge b-flag">approved ' + peso(r.amount) + '</span>' : '') + '</td><td>' + esc(r.payment.ref) + '</td><td>' + esc(r.payment.proof) + '</td><td>' + esc(r.payment.by) + '</td></tr>').join('') || '<tr><td colspan="7" class="muted">None.</td></tr>') + '</tbody></table></div></div>';
+}
+
+function vAudit() {
+  const q = (ui.aq || '').toLowerCase(), rid = ui.areq || 'all', act = ui.aact || 'all';
+  const actions = [...new Set(S.audit.map(a => a.action))].sort();
+  const list = S.audit.slice().sort((a, b) => b.ts.localeCompare(a.ts)).filter(a => (rid === 'all' || a.reqId === rid) && (act === 'all' || a.action === act) && (!q || JSON.stringify(a).toLowerCase().includes(q)));
+  return '<h1>Audit trail</h1><p class="sub">Timestamped history of who submitted, verified, approved, rejected, updated and recorded each request or payment.</p><div class="card"><div class="toolbar">' +
+    '<label>Request<select id="aReq"><option value="all">All</option>' + S.requests.map(r => '<option' + (rid === r.id ? ' selected' : '') + '>' + r.id + '</option>').join('') + '</select></label>' +
+    '<label>Action<select id="aAct"><option value="all">All</option>' + actions.map(a => '<option' + (act === a ? ' selected' : '') + '>' + esc(a) + '</option>').join('') + '</select></label>' +
+    '<label>Search<input id="aQ" value="' + esc(ui.aq || '') + '"></label></div>' +
+    '<div class="tablewrap"><table><thead><tr><th>When</th><th>Who (simulated persona)</th><th>Action</th><th>Request</th><th>Details</th></tr></thead><tbody>' +
+    (list.map(a => '<tr><td>' + fts(a.ts) + '</td><td>' + esc(a.actor) + '<br><span class="refs">' + esc(a.role) + '</span></td><td>' + esc(a.action) + '</td><td>' + (a.reqId ? '<a href="#/requests/' + a.reqId + '">' + a.reqId + '</a>' : '-') + '</td><td>' + esc(a.detail) + (a.refs ? '<br><span class="refs">' + Object.keys(a.refs).map(k => esc(k) + ': ' + esc(Array.isArray(a.refs[k]) ? a.refs[k].filter(Boolean).join(', ') : a.refs[k])).join(' · ') + '</span>' : '') + '</td></tr>').join('') || '<tr><td colspan="5" class="muted">No entries.</td></tr>') + '</tbody></table></div></div>';
+}
+
+function chain(r) {
+  const v = lastVer(r), needV = getExc(r).some(e => e.code === 'changed_details');
+  const step = (cls, t, d) => '<li class="' + cls + '"><div><strong>' + t + '</strong><br>' + d + '</div></li>';
+  const bud = budget(r.budgetId);
+  return '<ul class="chain">' +
+    step('done', '1. Request', r.id + ' submitted ' + fts(r.submittedAt) + ' by ' + esc(r.submittedBy)) +
+    step(r.invoiceDoc ? 'done' : 'warn', '2. Invoice', esc(r.invoiceNo) + ' · ' + peso(r.amount) + ' · document: ' + esc(r.invoiceDoc || 'missing')) +
+    step(v ? (verified(r) ? 'done' : 'warn') : (needV ? 'warn' : ''), '3. Verification', v ? esc(v.outcome.replace('_', ' ')) + ' via ' + esc(v.contact) + ' (' + esc(v.by) + ', ' + fts(v.at) + ')' : (needV ? 'Required - not yet recorded' : 'Not required (no changed details)')) +
+    step(r.review ? 'done' : '', '4. Reviewer decision', r.review ? esc(r.review.decision.replace('_', ' ')) + ' by ' + esc(r.review.by) + ' (' + fts(r.review.at) + ')' : 'Pending') +
+    step(r.approval ? (r.approval.decision === 'approved' ? 'done' : 'warn') : '', '5. Approval', r.approval ? esc(r.approval.decision) + ' by ' + esc(r.approval.by) + ' (' + fts(r.approval.at) + ')' : 'Pending') +
+    step(r.payment ? 'done' : '', '6. Payment reference', r.payment ? esc(r.payment.ref) + ' · ' + peso(r.payment.amount) + ' on ' + fdate(r.payment.date) + ' · proof ' + esc(r.payment.proof) : 'Not yet recorded') +
+    step(r.payment ? 'done' : '', '7. Reports', r.payment ? 'Counted in Recorded payments and ' + esc(bud.name) + ' spend' : OPEN.includes(r.status) ? 'Counted in Spending commitments and ' + esc(bud.name) + ' committed' : 'Not counted (rejected)') + '</ul>';
+}
+
+function vDetail(id) {
+  const r = req(id);
+  if (!r) return '<div class="card"><h1>Request not found</h1><a href="#/requests">Back to requests</a></div>';
+  const sup = supplier(r.supplierId), bud = budget(r.budgetId), ex = getExc(r), isOpen = r.status === 'pending' || r.status === 'needs_review';
+  const changed = ex.some(e => e.code === 'changed_details'), hasBudget = ex.some(e => e.code === 'budget');
+  const cmp = (lbl, k) => '<tr><td>' + lbl + '</td><td>' + esc(sup.bank[k]) + '</td><td class="' + (norm(sup.bank[k]) !== norm(r.dest[k]) ? 'diff' : '') + '">' + esc(r.dest[k]) + '</td></tr>';
+  const onFile = '<option value="phone">Phone on file: ' + esc(sup.contact.phone) + '</option><option value="email">Email on file: ' + esc(sup.contact.email) + '</option>';
+  let h = '<p><a href="#/requests">&larr; Requests</a></p><h1>' + r.id + ' ' + badge(r.status) + '</h1><p class="sub">' + esc(sup.name) + ' · invoice ' + esc(r.invoiceNo) + ' · ' + esc(stage(r)) + '</p>';
+  h += '<div class="grid2"><div class="card"><h2>Request</h2><table><tbody><tr><td>Amount</td><td><strong>' + peso(r.amount) + '</strong></td></tr><tr><td>Amount on supporting records</td><td>' + (r.supportedAmount == null ? '<em>none</em>' : peso(r.supportedAmount)) + '</td></tr><tr><td>Due date</td><td>' + fdate(r.dueDate) + '</td></tr><tr><td>Budget</td><td>' + esc(bud.name) + '</td></tr><tr><td>Payment/PO ref</td><td>' + esc(r.payRef || 'missing') + '</td></tr><tr><td>Invoice document</td><td>' + esc(r.invoiceDoc || 'missing') + '</td></tr><tr><td>Supporting documents</td><td>' + (r.docs.map(esc).join(', ') || 'none') + '</td></tr><tr><td>Submitted</td><td>' + fts(r.submittedAt) + ' by ' + esc(r.submittedBy) + '</td></tr></tbody></table><h3>Supporting message</h3><blockquote class="muted" style="margin:0">' + (esc(r.message) || '<em>none</em>') + '</blockquote><p class="refs">Document names only. Browser-local handling is not secure storage.</p></div>';
+  h += '<div class="card"><h2>Exceptions for review</h2><div class="notice info">' + FLAG_NOTE + '</div>' + (ex.length ? excList(ex) : '<p>No exceptions.</p>') +
+    '<h3>Payment destination</h3><table><thead><tr><th></th><th>On file</th><th>Requested</th></tr></thead><tbody>' + cmp('Bank', 'bank') + cmp('Account name', 'accName') + cmp('Account number', 'accNo') + '</tbody></table></div></div>';
+
+  h += '<div class="card"><h2>1. Independent verification ' + (changed ? '<span class="badge b-flag">Required before approval</span>' : '') + '</h2>';
+  if (r.verifications.length) h += '<ul class="timeline">' + r.verifications.map(v => '<li><strong>' + esc(v.outcome.replace('_', ' ')) + '</strong> via ' + esc(v.contact) + ' (' + esc(v.method.replace('_', ' ')) + ')<br>' + esc(v.notes) + '<br><small>' + fts(v.at) + ' · ' + esc(v.by) + '</small></li>').join('') + '</ul>';
+  else h += '<p class="muted">No verification recorded.</p>';
+  if (isOpen) {
+    h += canDo('verify') ? '<form class="stack" data-form="verify" data-id="' + r.id + '" novalidate><div class="row3"><label>Method<select name="method"><option value="phone">Phone call</option><option value="email">Email</option><option value="in_person">In person / known portal</option></select></label><label>Contact used<select name="contact">' + onFile + '<option value="message">Contact details from the supporting message</option></select></label><label>Outcome<select name="outcome"><option value="confirmed">Supplier confirmed these payment details</option><option value="not_confirmed">Supplier did not confirm</option><option value="unreachable">Could not reach supplier</option></select></label></div><label>Notes (who you spoke to, what was confirmed)<textarea name="notes"></textarea></label><label class="check"><input type="checkbox" name="ack"> I used a contact already on file, not contact details supplied in the message.</label><p class="err" hidden></p><div><button class="btn primary">Record verification</button></div></form>' : permNote('verify', 'record verification');
+  }
+  h += '</div>';
+
+  h += '<div class="card"><h2>2. Finance review</h2>' + (r.review ? '<p><strong>' + esc(r.review.decision.replace('_', ' ')) + '</strong> by ' + esc(r.review.by) + ' · ' + fts(r.review.at) + '<br>' + esc(r.review.note) + '</p>' : '<p class="muted">No reviewer decision yet.</p>');
+  if (isOpen) h += canDo('review') ? '<form class="stack" data-form="review" data-id="' + r.id + '" novalidate><label>Decision<select name="decision"><option value="recommend_approve">Recommend approval</option><option value="recommend_reject">Recommend rejection</option></select></label><label>Notes / reason<textarea name="note"></textarea></label><label class="check"><input type="checkbox" name="ack"> I reviewed all ' + realExc(r).length + ' exception(s) shown above' + (hasBudget ? ', including the budget exception' : '') + '.</label><p class="err" hidden></p><div><button class="btn primary">Record review decision</button></div></form>' : permNote('review', 'record review decisions');
+  h += '</div>';
+
+  h += '<div class="card"><h2>3. Approval</h2>' + (r.approval ? '<p><strong>' + esc(r.approval.decision) + '</strong> by ' + esc(r.approval.by) + ' · ' + fts(r.approval.at) + '<br>' + esc(r.approval.note) + (r.approval.budgetOverride ? '<br><span class="badge b-flag">Budget exception override: ' + esc(r.approval.budgetOverride) + '</span>' : '') + '</p>' : '<p class="muted">No approval decision yet.</p>');
+  if (isOpen) h += canDo('approve') ? '<form class="stack" data-form="approve" data-id="' + r.id + '" novalidate><label>Decision<select name="decision"><option value="approved">Approve</option><option value="rejected">Reject</option></select></label><label>Reason / notes<textarea name="note"></textarea></label>' + (hasBudget ? '<label>Budget exception - reason for proceeding (required to approve)<textarea name="override"></textarea></label>' : '') + '<p class="err" hidden></p><div><button class="btn primary">Record decision</button></div></form>' : permNote('approve', 'approve or reject');
+  h += '</div>';
+
+  h += '<div class="card"><h2>4. Manual payment record</h2>';
+  if (r.payment) h += '<p>Paid ' + fdate(r.payment.date) + ' · <strong>' + peso(r.payment.amount) + '</strong> · ref ' + esc(r.payment.ref) + ' · proof ' + esc(r.payment.proof) + '<br>Recorded by ' + esc(r.payment.by) + ' · ' + fts(r.payment.at) + (r.payment.notes ? '<br>Note: ' + esc(r.payment.notes) : '') + '</p>';
+  else if (r.status === 'approved') h += '<div class="notice info">Only records a payment already made outside this app. It does not send money.</div>' + (canDo('record') ? '<button class="btn primary" data-act="pay" data-id="' + r.id + '">Record external payment</button>' : permNote('record', 'record payments'));
+  else h += '<p class="muted">Available only after the request is approved.</p>';
+  h += '</div>';
+  h += '<div class="grid2"><div class="card"><h2>Traceability</h2>' + chain(r) + '</div><div class="card"><h2>History</h2>' + auditList(S.audit.filter(a => a.reqId === r.id).sort((a, b) => b.ts.localeCompare(a.ts))) + '</div></div>';
+  return h;
+}
+
+/* ---------- actions ---------- */
+const forms = {
+  newreq(fd, f) {
+    if (!guard('create', 'submit requests')) return 'Switch to the Requester persona to submit.';
+    const d = draftFrom(fd);
+    if (!d.supplierId) return 'Choose a supplier.';
+    if (!d.budgetId) return 'Choose a budget.';
+    if (!(d.amount > 0)) return 'Enter a requested amount greater than zero.';
+    if (!d.invoiceNo) return 'Enter the invoice number.';
+    if (!d.dueDate) return 'Enter the due date.';
+    if (!d.dest.bank || !d.dest.accName || !d.dest.accNo) return 'Enter the payment destination stated on the invoice or message.';
+    const r = d; r.id = 'REQ-' + (++S.seq); r.submittedBy = persona().name; r.verifications = []; r.review = null; r.approval = null; r.payment = null; r.snapshot = null;
+    const ex = analyze(r).filter(e => !e.info);
+    r.status = ex.length ? 'needs_review' : 'pending';
+    S.requests.push(r);
+    logEv('Submitted', r.id, ex.length ? 'Submitted with ' + ex.length + ' exception(s) for human review: ' + ex.map(e => e.title).join('; ') + '.' : 'Submitted. No exceptions found at intake.', { invoice: r.invoiceNo, docs: [r.invoiceDoc, ...r.docs] });
+    save(); toast(r.id + ' submitted.'); navigate('requests/' + r.id); return null;
+  },
+  verify(fd, f) {
+    if (!guard('verify', 'record verification')) return;
+    const r = req(f.dataset.id), sup = supplier(r.supplierId);
+    const contact = fd.get('contact'), notes = String(fd.get('notes') || '').trim();
+    if (contact === 'message') return showErr(f, 'Contact details from the suspicious message cannot be used. Use a contact already on file.');
+    if (fd.get('ack') !== 'on') return showErr(f, 'Confirm that you used a contact already on file.');
+    if (notes.length < 10) return showErr(f, 'Add notes describing who you spoke to and what was confirmed (at least 10 characters).');
+    const label = contact === 'phone' ? 'Phone on file: ' + sup.contact.phone : 'Email on file: ' + sup.contact.email;
+    r.verifications.push({ method: fd.get('method'), contact: label, outcome: fd.get('outcome'), independent: true, notes, by: persona().name, at: new Date().toISOString() });
+    logEv('Verification recorded', r.id, 'Outcome: ' + fd.get('outcome').replace('_', ' ') + '. ' + notes, { contact: label });
+    save(); toast('Verification recorded.'); render();
+  },
+  review(fd, f) {
+    if (!guard('review', 'record review decisions')) return;
+    const r = req(f.dataset.id), dec = fd.get('decision'), note = String(fd.get('note') || '').trim();
+    if (note.length < 5) return showErr(f, 'A note or reason is required.');
+    if (fd.get('ack') !== 'on') return showErr(f, 'Confirm you reviewed all exceptions.');
+    if (dec === 'recommend_approve' && analyze(r).some(e => e.code === 'changed_details') && !verified(r)) return showErr(f, 'Changed payment details need a confirmed independent verification before you can recommend approval.');
+    r.review = { decision: dec, note, ack: true, by: persona().name, at: new Date().toISOString() };
+    logEv('Review decision', r.id, (dec === 'recommend_approve' ? 'Recommended approval. ' : 'Recommended rejection. ') + note);
+    save(); toast('Review decision recorded.'); render();
+  },
+  approve(fd, f) {
+    if (!guard('approve', 'approve or reject')) return;
+    const r = req(f.dataset.id), dec = fd.get('decision'), note = String(fd.get('note') || '').trim(), ov = String(fd.get('override') || '').trim();
+    if (note.length < 5) return showErr(f, 'A reason is required.');
+    const ex = analyze(r);
+    if (dec === 'approved') {
+      if (!r.review || r.review.decision !== 'recommend_approve') return showErr(f, 'A reviewer must first record "recommend approval".');
+      if (ex.some(e => e.code === 'changed_details') && !verified(r)) return showErr(f, 'Blocked: changed supplier payment details need documented independent verification (confirmed, via a contact already on file).');
+      if (ex.some(e => e.code === 'budget') && ov.length < 5) return showErr(f, 'Budget exception: enter the reason for proceeding.');
+    }
+    const sup = supplier(r.supplierId);
+    r.snapshot = ex;
+    r.approval = { decision: dec, note, by: persona().name, at: new Date().toISOString(), budgetOverride: dec === 'approved' && ov ? ov : '' };
+    r.status = dec === 'approved' ? 'approved' : 'rejected';
+    logEv(dec === 'approved' ? 'Approved' : 'Rejected', r.id, note + (r.approval.budgetOverride ? ' | Budget exception override: ' + ov : ''), { exceptions: ex.filter(e => !e.info).map(e => e.title).join('; ') || 'none' });
+    if (dec === 'approved' && (sup.pendingChange || !sameBank(r.dest, sup.bank)) && verified(r)) {
+      sup.history.push({ bank: sup.bank, replacedAt: new Date().toISOString(), reqId: r.id });
+      sup.bank = Object.assign({}, r.dest); sup.pendingChange = null;
+      logEv('Supplier updated', r.id, 'Supplier register payment destination updated to the independently verified details for ' + sup.name + '.', { supplier: sup.id });
+    }
+    save(); toast('Request ' + r.status + '.'); render();
+  }
+};
+
+function openPay(id) {
+  if (!guard('record', 'record payments')) return;
+  const r = req(id); if (!r || r.status !== 'approved') return toast('Only approved requests can be recorded as paid.', 'err');
+  modal('Record external payment - ' + r.id,
+    '<div class="notice info">Record a payment that has <strong>already been made outside this app</strong>. This does not initiate, schedule or send a payment.</div>' +
+    '<p>' + esc(supplier(r.supplierId).name) + ' · invoice ' + esc(r.invoiceNo) + ' · approved ' + peso(r.amount) + '</p>' +
+    '<div class="row2"><label>Payment date<input type="date" name="date" max="' + todayStr() + '"></label><label>Actual amount paid (PHP)<input type="number" step="0.01" min="0" name="amount" value="' + r.amount + '"></label></div>' +
+    '<label>Bank / payment reference number<input name="ref"></label><label>Supporting proof (file name only is stored)<input type="file" name="proof"></label><label>Notes (required if amount differs from approved)<textarea name="notes"></textarea></label>',
+    fd => {
+      const date = fd.get('date'), amt = money(fd.get('amount')), ref = String(fd.get('ref') || '').trim(), proof = fileName(fd.get('proof')), notes = String(fd.get('notes') || '').trim();
+      if (!date) return 'Enter the payment date.';
+      if (date > todayStr()) return 'The payment date cannot be in the future - this records a payment already made.';
+      if (!(amt > 0)) return 'Enter the actual amount paid.';
+      if (!ref) return 'Enter the reference number.';
+      const dup = S.requests.find(o => o.payment && o.payment.ref.toLowerCase() === ref.toLowerCase());
+      if (dup) return 'That reference is already recorded on ' + dup.id + '.';
+      if (!proof) return 'Attach supporting proof (for example a bank confirmation).';
+      if (Math.abs(amt - r.amount) > 0.005 && notes.length < 5) return 'The actual amount differs from the approved ' + peso(r.amount) + '. Add a note explaining the difference.';
+      r.payment = { date, amount: amt, ref, proof, notes, by: persona().name, at: new Date().toISOString() };
+      r.status = 'paid';
+      logEv('Payment recorded', r.id, 'Recorded an external payment already made. Actual amount ' + peso(amt) + ' vs approved ' + peso(r.amount) + '.' + (notes ? ' ' + notes : ''), { reference: ref, proof: proof, date: date });
+      save(); toast('Payment recorded for ' + r.id + '.'); render(); return null;
+    }, 'Record payment');
+}
+
+function supplierFields(v) {
+  v = v || {};
+  return '<div class="row2"><label>Bank<input name="bank"></label><label>Account name<input name="accName"></label></div><label>Account number<input name="accNo"></label>';
+}
+const acts = {
+  safety() { modal('Safety notes and disclosures', '<ul><li>PayVerify is an <strong>educational prototype</strong> using <strong>illustrative sample data</strong>.</li><li>Edits are saved only in this browser\'s local storage. Use "Reset sample workspace" to restore the original data. No managed or shared database is used.</li><li>The persona selector is <strong>simulated</strong>. It is not real authentication or authorization.</li><li>Document handling is browser-local (file names only) and is <strong>not secure storage</strong>.</li><li>Flags are exceptions for human review. They <strong>do not prove fraud</strong> or that a sender is a scammer.</li><li>There is <strong>no bank or payment connection</strong> and no money release. Recording a payment only documents one that was already made.</li></ul>', null); },
+  closeModal() { $('#modal').close(); },
+  reset() {
+    modal('Reset sample workspace', '<p>Erase your local demo edits and restore the original illustrative sample data?</p>', () => {
+      try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+      S = seed(); S.persona = 'reviewer'; save(); toast('Sample workspace restored.'); navigate('dashboard'); return null;
+    }, 'Reset');
+  },
+  pay(d) { openPay(d.id); },
+  addSupplier() {
+    if (!guard('supplier', 'edit the supplier register')) return;
+    modal('Add supplier', '<label>Supplier name<input name="name"></label><div class="row3"><label>Contact name<input name="cname"></label><label>Contact email<input name="email"></label><label>Contact phone<input name="phone"></label></div><h3>Payment destination</h3>' + supplierFields(), fd => {
+      const g = k => String(fd.get(k) || '').trim();
+      if (!g('name') || !g('cname') || !g('email') || !g('phone') || !g('bank') || !g('accName') || !g('accNo')) return 'Complete all fields. A contact and destination on file are required for later verification.';
+      const id = 'SUP-' + String(S.suppliers.length + 1).padStart(2, '0');
+      S.suppliers.push({ id, name: g('name'), contact: { name: g('cname'), email: g('email'), phone: g('phone') }, bank: { bank: g('bank'), accName: g('accName'), accNo: g('accNo') }, pendingChange: null, history: [], registeredAt: todayStr() });
+      logEv('Supplier added', null, g('name') + ' added to the supplier register.', { supplier: id });
+      save(); toast('Supplier added.'); render(); return null;
+    }, 'Add supplier');
+  },
+  reportChange(d) {
+    if (!guard('supplier', 'edit the supplier register')) return;
+    const s = supplier(d.id);
+    modal('Report changed payment details - ' + s.name, '<div class="notice warn">The supplier will be flagged and affected requests cannot be approved until independently verified through the contact already on file.</div><label>How was the change received? (e.g. email, letter, invoice footer)<input name="via"></label>' + supplierFields(), fd => {
+      const g = k => String(fd.get(k) || '').trim();
+      if (!g('via') || !g('bank') || !g('accName') || !g('accNo')) return 'Complete all fields.';
+      const nb = { bank: g('bank'), accName: g('accName'), accNo: g('accNo') };
+      if (sameBank(nb, s.bank)) return 'These details match what is already on file.';
+      s.pendingChange = { bank: nb, reportedAt: new Date().toISOString(), via: g('via') };
+      logEv('Payment details change reported', null, s.name + ': change of payment destination reported (' + g('via') + '). Flagged for independent verification.', { supplier: s.id });
+      save(); toast('Supplier flagged for verification.'); render(); return null;
+    }, 'Flag for verification');
+  }
+};
+
+/* ---------- router & render ---------- */
+const NAV = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['new', 'New Request'], ['suppliers', 'Suppliers'], ['budgets', 'Budgets'], ['approvals', 'Approvals'], ['payments', 'Payments'], ['audit', 'Audit']];
+function render() {
+  const [p, id] = (cur || 'dashboard').split('/');
+  const route = NAV.some(n => n[0] === p) ? p : 'dashboard';
+  const sel = $('#persona');
+  sel.innerHTML = Object.keys(PERSONAS).map(k => '<option value="' + k + '"' + (S.persona === k ? ' selected' : '') + '>' + PERSONAS[k].name + ' - ' + PERSONAS[k].label + '</option>').join('');
+  const badgeN = { approvals: S.requests.filter(r => r.status === 'pending' || r.status === 'needs_review').length, payments: S.requests.filter(r => r.status === 'approved').length, requests: S.requests.filter(r => r.status === 'needs_review').length };
+  $('#nav').innerHTML = NAV.map(n => '<a href="#/' + n[0] + '" class="' + (n[0] === route ? 'active' : '') + '">' + n[1] + (badgeN[n[0]] ? '<span class="count">' + badgeN[n[0]] + '</span>' : '') + '</a>').join('');
+  const views = { dashboard: vDashboard, requests: () => id ? vDetail(id) : vRequests(), new: vNew, suppliers: vSuppliers, budgets: vBudgets, approvals: vApprovals, payments: vPayments, audit: vAudit };
+  $('#view').innerHTML = views[route]();
+  if (route === 'new') updatePreview($('form[data-form=newreq]'));
+}
+
+document.addEventListener('click', e => {
+  const l = e.target.closest('a[href^="#/"]');
+  if (l) { e.preventDefault(); navigate(l.getAttribute('href')); return; }
+  const a = e.target.closest('[data-act]');
+  if (a && acts[a.dataset.act]) { e.preventDefault(); acts[a.dataset.act](a.dataset); }
+});
+function runForm(f) {
+  const err = forms[f.dataset.form](new FormData(f), f);
+  if (typeof err === 'string') showErr(f, err);
+}
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form[data-form]');
+  if (!f) return;
+  e.preventDefault();
+  runForm(f);
+});
+/* Sandboxed preview panes block native form submission, so submit buttons are handled directly. */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || b.disabled || (b.type && b.type !== 'submit') || b.hasAttribute('data-act')) return;
+  const f = b.closest('form');
+  if (!f) return;
+  if (f.dataset.form) { e.preventDefault(); runForm(f); }
+  else if (f._run) { e.preventDefault(); f._run(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+  const f = e.target.closest('form');
+  if (!f) return;
+  if (f.dataset.form) { e.preventDefault(); runForm(f); }
+  else if (f._run) { e.preventDefault(); f._run(); }
+});
+document.addEventListener('input', e => {
+  const f = e.target.closest('form[data-form=newreq]'); if (f) updatePreview(f);
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'persona') { S.persona = t.value; save(); render(); return; }
+  if (t.id === 'fStatus') { ui.status = t.value; render(); return; }
+  if (t.id === 'fQ') { ui.q = t.value; render(); return; }
+  if (t.id === 'aReq') { ui.areq = t.value; render(); return; }
+  if (t.id === 'aAct') { ui.aact = t.value; render(); return; }
+  if (t.id === 'aQ') { ui.aq = t.value; render(); return; }
+  const f = t.closest('form[data-form=newreq]');
+  if (f) {
+    if (t.name === 'supplierId') {
+      const s = supplier(t.value);
+      ['bank', 'accName', 'accNo'].forEach(k => { f.elements[k].value = s ? s.bank[k] : ''; });
+    }
+    updatePreview(f);
+  }
+});
+window.addEventListener('hashchange', () => { cur = location.hash.replace(/^#\/?/, ''); render(); });
+
+cur = location.hash.replace(/^#\/?/, '');
+S = load();
+if (!S.persona || !PERSONAS[S.persona]) S.persona = 'reviewer';
+render();
+try { if (!localStorage.getItem(ACK)) { localStorage.setItem(ACK, '1'); acts.safety(); } } catch (e) { /* ignore */ }
+})();
+</script>
+</body>
+</html>
